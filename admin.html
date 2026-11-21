@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bảng Quản Trị Viên (QTV) - HoangNam Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        gaming: {
+                            bg: '#06080d',
+                            panel: '#0a0e17',
+                            card: '#0d121d',
+                            cardHover: '#131b2b',
+                            border: '#1c263b',
+                            cyan: '#00d2ff',
+                            indigo: '#6366f1',
+                        }
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 18px rgba(0, 210, 255, 0.28)',
+                        'neon-indigo': '0 0 22px rgba(99, 102, 241, 0.28)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            background-color: #06080d;
+            color: #f1f5f9;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #06080d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00d2ff;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-header {
+            background: rgba(6, 8, 13, 0.92);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gaming-bg text-slate-100 antialiased selection:bg-[#00d2ff]/25 selection:text-cyan-200">
+
+    <!-- ================= 1. HEADER BẢNG QTV ================= -->
+    <header class="sticky top-0 z-40 glass-header border-b border-gaming-border">
+        <div class="max-w-6xl mx-auto px-2.5 sm:px-5 py-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#00d2ff] to-[#6366f1] p-[1.5px] shadow-neon-cyan shrink-0">
+                    <div class="w-full h-full bg-gaming-bg rounded-[10px] flex items-center justify-center text-[#00d2ff]">
+                        <i class="fa-solid fa-shield-halved text-xs sm:text-sm"></i>
+                    </div>
+                </div>
+                <div class="min-w-0 leading-tight">
+                    <div class="font-display font-bold text-xs sm:text-base text-white truncate">
+                        BẢNG QTV <span class="text-[#00d2ff]">HOANGNAM</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <span id="supabaseStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="supabaseStatusText" class="truncate">Đang kết nối Supabase...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button type="button" onclick="manualForceSync()" title="Đồng bộ dữ liệu ngay"
+                    class="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-gaming-card hover:bg-gaming-cardHover border border-[#00d2ff]/40 text-[#00d2ff] font-bold text-[11px] sm:text-xs flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Đồng bộ QTV</span>
+                </button>
+
+                <a href="./index.html" target="_blank"
+                    class="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-gaming-card hover:bg-gaming-cardHover border border-gaming-border text-slate-200 font-bold text-[11px] sm:text-xs flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-store text-emerald-400"></i>
+                    <span class="hidden sm:inline">Mở Shop</span>
+                </a>
+
+                <button type="button" id="adminLockBtn" onclick="lockAdminSession()"
+                    class="hidden h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 font-bold text-[11px] sm:text-xs flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-lock"></i>
+                    <span class="hidden sm:inline">Khóa QTV</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= 2. MÀN HÌNH XÁC THỰC QTV ================= -->
+    <section id="adminLoginGate" class="flex-1 flex items-center justify-center px-3 py-8">
+        <div class="w-full max-w-md rounded-3xl bg-gaming-card border border-gaming-border p-5 sm:p-6 shadow-neon-indigo space-y-4">
+            <div class="text-center space-y-1.5">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#00d2ff] to-[#6366f1] p-[1.5px] shadow-neon-cyan">
+                    <div class="w-full h-full bg-gaming-bg rounded-[14px] flex items-center justify-center text-[#00d2ff] text-lg">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                </div>
+                <h1 class="font-display font-bold text-lg text-white">ĐĂNG NHẬP QUẢN TRỊ VIÊN</h1>
+                <p class="text-xs text-slate-400">Nhập tài khoản và mật khẩu QTV để quản lý đơn hàng, duyệt nạp tiền, tài khoản và theo dõi IP từ Shop.</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-200 mb-1">Tài khoản QTV</label>
+                    <input type="text" id="adminUsernameInput" required autocomplete="username"
+                        placeholder="Nhập tài khoản QTV (mặc định: admin)..."
+                        class="w-full bg-gaming-bg border border-gaming-border focus:border-[#00d2ff] rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-200 mb-1">Mật khẩu QTV</label>
+                    <input type="password" id="adminPasswordInput" required autocomplete="current-password"
+                        placeholder="Nhập mật khẩu QTV (mặc định: adminstore123)..."
+                        class="w-full bg-gaming-bg border border-gaming-border focus:border-[#00d2ff] rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-500 focus:outline-none">
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#6366f1] hover:opacity-95 text-slate-950 font-extrabold text-xs shadow-neon-cyan active:scale-95 transition-transform">
+                    Truy cập Bảng QTV
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ================= 3. NỘI DUNG BẢNG QTV CHÍNH ================= -->
+    <main id="adminDashboardMain" class="hidden flex-1 max-w-6xl w-full mx-auto px-3 sm:px-5 py-4 space-y-5">
+
+        <!-- Thống kê nhanh 4 ô -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            <div class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Tổng doanh thu</span>
+                    <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
+                </div>
+                <div id="statRevenue" class="font-display font-extrabold text-base sm:text-xl text-emerald-400">0đ</div>
+                <div class="text-[10px] text-slate-500">Đơn đã hoàn thành</div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Đơn chờ xử lý</span>
+                    <i class="fa-solid fa-bag-shopping text-[#00d2ff]"></i>
+                </div>
+                <div id="statPendingOrders" class="font-display font-extrabold text-base sm:text-xl text-[#00d2ff]">0</div>
+                <div class="text-[10px] text-slate-500">PS99 / Acc / Perm Fruit</div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Nạp tiền chờ duyệt</span>
+                    <i class="fa-solid fa-wallet text-amber-400"></i>
+                </div>
+                <div id="statPendingTopups" class="font-display font-extrabold text-base sm:text-xl text-amber-400">0</div>
+                <div class="text-[10px] text-slate-500">Chuyển khoản &amp; Thẻ cào</div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Tài khoản &amp; IP Sync</span>
+                    <i class="fa-solid fa-network-wired text-indigo-400"></i>
+                </div>
+                <div id="statUsersAndLogs" class="font-display font-extrabold text-base sm:text-xl text-indigo-300">0 / 0</div>
+                <div class="text-[10px] text-slate-500">Thành viên / Bản ghi IP</div>
+            </div>
+        </section>
+
+        <!-- Thanh điều hướng Tab QTV -->
+        <section class="flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-gaming-panel p-1.5 rounded-2xl border border-gaming-border">
+            <button type="button" id="qtvTab-orders" onclick="switchAdminTab('orders')"
+                class="qtv-tab px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap bg-gradient-to-r from-[#00d2ff] to-[#6366f1] text-slate-950 transition-all">
+                <i class="fa-solid fa-cart-flatbed mr-1"></i>Đơn hàng (<span id="badgeOrdersCount">0</span>)
+            </button>
+            <button type="button" id="qtvTab-topups" onclick="switchAdminTab('topups')"
+                class="qtv-tab px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap text-slate-300 hover:text-white transition-all">
+                <i class="fa-solid fa-money-bill-transfer mr-1 text-amber-400"></i>Duyệt nạp (<span id="badgeTopupsCount">0</span>)
+            </button>
+            <button type="button" id="qtvTab-users" onclick="switchAdminTab('users')"
+                class="qtv-tab px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap text-slate-300 hover:text-white transition-all">
+                <i class="fa-solid fa-users mr-1 text-emerald-400"></i>Tài khoản (<span id="badgeUsersCount">0</span>)
+            </button>
+            <button type="button" id="qtvTab-supabase" onclick="switchAdminTab('supabase')"
+                class="qtv-tab px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap text-slate-300 hover:text-white transition-all">
+                <i class="fa-solid fa-satellite-dish mr-1 text-[#00d2ff]"></i>IP &amp; Đồng bộ Cloud (<span id="badgeSyncCount">0</span>)
+            </button>
+        </section>
+
+        <!-- TAB 1: QUẢN LÝ ĐƠN HÀNG -->
+        <section id="panel-orders" class="space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h2 class="font-display font-bold text-sm sm:text-base text-white">DANH SÁCH ĐƠN DỊCH VỤ (PS99, ACC, PERM FRUIT)</h2>
+                <div class="flex items-center gap-2">
+                    <select id="orderStatusFilter" onchange="renderAdminOrders()"
+                        class="bg-gaming-card border border-gaming-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="Đang xử Lí">Đang xử Lí</option>
+                        <option value="Đã Hoàn Thành">Đã Hoàn Thành</option>
+                        <option value="Từ Chối">Từ Chối (Hoàn tiền)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="adminOrdersContainer" class="space-y-3"></div>
+        </section>
+
+        <!-- TAB 2: DUYỆT NẠP TIỀN (CHUYỂN KHOẢN & THẺ CÀO) -->
+        <section id="panel-topups" class="hidden space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h2 class="font-display font-bold text-sm sm:text-base text-white">DUYỆT NẠP TIỀN CHUYỂN KHOẢN &amp; THẺ CÀO</h2>
+                <select id="topupStatusFilter" onchange="renderAdminTopups()"
+                    class="bg-gaming-card border border-gaming-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                    <option value="all">Tất cả yêu cầu</option>
+                    <option value="Chờ Duyệt">Chờ Duyệt</option>
+                    <option value="Đã Duyệt">Đã Duyệt</option>
+                    <option value="Từ Chối">Từ Chối</option>
+                </select>
+            </div>
+            <div id="adminTopupsContainer" class="space-y-3"></div>
+        </section>
+
+        <!-- TAB 3: QUẢN LÝ TÀI KHOẢN & CỘNG/TRỪ SỐ DƯ -->
+        <section id="panel-users" class="hidden space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h2 class="font-display font-bold text-sm sm:text-base text-white">QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG</h2>
+                <input type="text" id="adminUserSearchInput" oninput="renderAdminUsers()"
+                    placeholder="Tìm tên tài khoản hoặc email..."
+                    class="bg-gaming-card border border-gaming-border focus:border-[#00d2ff] rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none sm:w-64">
+            </div>
+            <div id="adminUsersContainer" class="space-y-3"></div>
+        </section>
+
+        <!-- TAB 4: THEO DÕI IP & ĐỒNG BỘ XUYÊN THIẾT BỊ QUA SUPABASE -->
+        <section id="panel-supabase" class="hidden space-y-3">
+            <div class="p-3.5 rounded-2xl bg-gaming-panel border border-[#00d2ff]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                <div class="space-y-0.5">
+                    <div class="font-bold text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-down text-[#00d2ff]"></i>
+                        Luồng đồng bộ Realtime &amp; IP từ Shop (Bảng <code class="text-[#00d2ff]">store_sync</code>)
+                    </div>
+                    <p class="text-[11px] text-slate-400">Tự động nhận sự kiện đăng ký, đăng nhập, đặt đơn, nạp tiền kèm địa chỉ IP từ mọi mạng/thiết bị khác nhau.</p>
+                </div>
+                <button type="button" onclick="fetchSupabaseLogs(true)"
+                    class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00d2ff] to-[#6366f1] text-slate-950 font-extrabold text-xs shrink-0 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i>Tải lại Cloud
+                </button>
+            </div>
+
+            <div id="adminSupabaseLogsContainer" class="space-y-2.5"></div>
+        </section>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-3 left-3 sm:left-auto sm:w-80 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+        /* ================= CẤU HÌNH SUPABASE & STORAGE ĐỒNG BỘ VỚI SHOP ================= */
+        const SUPABASE_URL = "https://ceicnklarilkytojtssy.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Y0U7X4uhNk2sMUiHm1tlVQ_JwAO2SOj";
+        const SUPABASE_TABLE = "store_sync";
+
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSCODE = "adminstore123";
+        const ADMIN_SESSION_KEY = "hoangnam_qtv_unlocked_v1";
+        const SYNC_CHANNEL_NAME = "hoangnam_store_sync_v1";
+
+        const STORAGE_KEYS = {
+            users: 'hoangnam_store_v5_users',
+            currentUser: 'hoangnam_store_v5_current_user',
+            guestBalance: 'hoangnam_store_v5_guest_balance',
+            guestCart: 'hoangnam_store_v5_guest_cart',
+            cart: 'hoangnam_store_v5_cart',
+            orders: 'hoangnam_store_v5_orders',
+            topups: 'hoangnam_store_v5_topups',
+            orderSeq: 'hoangnam_store_v5_order_seq',
+            integrity: 'hoangnam_store_v5_integrity_sig',
+            activityLog: 'hoangnam_store_v5_activity_log'
+        };
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        let syncChannel = null;
+        let activeTab = 'orders';
+        let cloudSyncRows = [];
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function safeJsonParse(raw, fallback) {
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed ?? fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function formatVND(amount) {
+            const num = Math.max(0, Math.round(Number(amount) || 0));
+            return num.toLocaleString('vi-VN') + 'đ';
+        }
+
+        function getUsers() {
+            const arr = safeJsonParse(localStorage.getItem(STORAGE_KEYS.users), []);
+            return Array.isArray(arr) ? arr : [];
+        }
+
+        function saveUsers(arr) {
+            localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(arr));
+        }
+
+        function getAllOrders() {
+            const arr = safeJsonParse(localStorage.getItem(STORAGE_KEYS.orders), []);
+            return Array.isArray(arr) ? arr : [];
+        }
+
+        function saveAllOrders(arr) {
+            localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(arr));
+        }
+
+        function getAllTopups() {
+            const arr = safeJsonParse(localStorage.getItem(STORAGE_KEYS.topups), []);
+            return Array.isArray(arr) ? arr : [];
+        }
+
+        function saveAllTopups(arr) {
+            localStorage.setItem(STORAGE_KEYS.topups, JSON.stringify(arr));
+        }
+
+        /* ================= PHÁT TÍN HIỆU ĐỒNG BỘ SANG SHOP & SUPABASE ================= */
+        async function pushAdminEventToCloud(eventType, payload = {}) {
+            try {
+                let ipAddress = "admin-panel";
+                try {
+                    const res = await fetch("https://api.ipify.org?format=json");
+                    const json = await res.json();
+                    if (json && json.ip) ipAddress = json.ip;
+                } catch (_) {}
+
+                await supabase
+                    .from(SUPABASE_TABLE)
+                    .insert([{
+                        event_type: eventType,
+                        payload: { source: 'admin.html', ...payload },
+                        ip_address: ipAddress
+                    }]);
+            } catch (_) {}
+        }
+
+        function broadcastAdminUpdate(reason, extraPayload = {}) {
+            try {
+                if (syncChannel) {
+                    syncChannel.postMessage({
+                        type: 'STATE_UPDATED',
+                        source: 'admin.html',
+                        reason,
+                        timestamp: Date.now()
+                    });
+                }
+            } catch (_) {}
+
+            pushAdminEventToCloud(reason, extraPayload);
+            refreshAllViews();
+        }
+
+        /* ================= XÁC THỰC BẢNG QTV ================= */
+        window.handleAdminLogin = function (event) {
+            event.preventDefault();
+            const user = String(document.getElementById('adminUsernameInput')?.value || '').trim().toLowerCase();
+            const pass = String(document.getElementById('adminPasswordInput')?.value || '').trim();
+            if (user !== ADMIN_USERNAME || pass !== ADMIN_PASSCODE) {
+                showToast('Sai tài khoản hoặc mật khẩu Quản trị viên!', 'error');
+                return;
+            }
+            sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+            document.getElementById('adminUsernameInput').value = '';
+            document.getElementById('adminPasswordInput').value = '';
+            checkAdminAuthGate();
+            showToast('Đăng nhập Bảng QTV thành công!', 'success');
+        };
+
+        window.lockAdminSession = function () {
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
+            checkAdminAuthGate();
+            showToast('Đã khóa phiên Quản trị viên.', 'success');
+        };
+
+        function checkAdminAuthGate() {
+            const unlocked = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+            document.getElementById('adminLoginGate').classList.toggle('hidden', unlocked);
+            document.getElementById('adminDashboardMain').classList.toggle('hidden', !unlocked);
+            document.getElementById('adminLockBtn').classList.toggle('hidden', !unlocked);
+            if (unlocked) {
+                refreshAllViews();
+                fetchSupabaseLogs(false);
+            }
+        }
+
+        window.switchAdminTab = function (tab) {
+            activeTab = ['orders', 'topups', 'users', 'supabase'].includes(tab) ? tab : 'orders';
+            ['orders', 'topups', 'users', 'supabase'].forEach(key => {
+                const btn = document.getElementById(`qtvTab-${key}`);
+                const panel = document.getElementById(`panel-${key}`);
+                if (btn) {
+                    btn.className = key === activeTab
+                        ? 'qtv-tab px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap bg-gradient-to-r from-[#00d2ff] to-[#6366f1] text-slate-950 transition-all'
+                        : 'qtv-tab px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap text-slate-300 hover:text-white transition-all';
+                }
+                if (panel) {
+                    panel.classList.toggle('hidden', key !== activeTab);
+                }
+            });
+        };
+
+        /* ================= XỬ LÝ ĐƠN HÀNG (HOÀN THÀNH / TỪ CHỐI & HOÀN TIỀN) ================= */
+        window.updateOrderStatus = function (orderId, newStatus) {
+            const orders = getAllOrders();
+            const idx = orders.findIndex(o => String(o.id) === String(orderId));
+            if (idx === -1) return;
+
+            const ord = orders[idx];
+            const prevStatus = ord.status;
+            ord.status = newStatus;
+
+            if (newStatus === 'Từ Chối' && ord.paidByBalance && !ord.refunded && prevStatus !== 'Từ Chối') {
+                const refundAmount = Math.max(0, Number(ord.total) || 0);
+                if (ord.ownerUsername) {
+                    const users = getUsers();
+                    const uIdx = users.findIndex(u => String(u.username || '').toLowerCase() === String(ord.ownerUsername).toLowerCase());
+                    if (uIdx !== -1) {
+                        users[uIdx].balance = (Number(users[uIdx].balance) || 0) + refundAmount;
+                        saveUsers(users);
+                    }
+                } else {
+                    const curGuest = parseInt(localStorage.getItem(STORAGE_KEYS.guestBalance) || '0', 10) || 0;
+                    localStorage.setItem(STORAGE_KEYS.guestBalance, String(curGuest + refundAmount));
+                }
+                ord.refunded = true;
+            }
+
+            orders[idx] = ord;
+            saveAllOrders(orders);
+            broadcastAdminUpdate(`QTV_ORDER_${newStatus}_${orderId}`, { orderId, status: newStatus, user: ord.ownerUsername || ord.username });
+            showToast(`Đã cập nhật đơn #${orderId} → ${newStatus}`, 'success');
+        };
+
+        window.deleteOrderItem = function (orderId) {
+            const orders = getAllOrders().filter(o => String(o.id) !== String(orderId));
+            saveAllOrders(orders);
+            broadcastAdminUpdate(`QTV_DELETE_ORDER_${orderId}`, { orderId });
+            showToast(`Đã xóa đơn #${orderId}`, 'success');
+        };
+
+        /* ================= DUYỆT NẠP TIỀN (CỘNG SỐ DƯ TỰ ĐỘNG CHO USER) ================= */
+        window.processTopupDecision = function (topupId, decision) {
+            const topups = getAllTopups();
+            const idx = topups.findIndex(t => String(t.id) === String(topupId));
+            if (idx === -1) return;
+
+            const tp = topups[idx];
+            if (tp.status === 'Đã Duyệt' && decision === 'Đã Duyệt') {
+                showToast('Yêu cầu nạp này đã được duyệt trước đó!', 'error');
+                return;
+            }
+
+            if (decision === 'Đã Duyệt' && tp.status !== 'Đã Duyệt') {
+                const targetUser = String(tp.ownerUsername || tp.username || '').trim();
+                const addAmount = Math.max(0, Number(tp.amount) || 0);
+                const users = getUsers();
+                const uIdx = users.findIndex(u => String(u.username || '').toLowerCase() === targetUser.toLowerCase());
+                if (uIdx !== -1) {
+                    users[uIdx].balance = (Number(users[uIdx].balance) || 0) + addAmount;
+                    saveUsers(users);
+                    if (String(localStorage.getItem(STORAGE_KEYS.currentUser) || '').toLowerCase() === targetUser.toLowerCase()) {
+                        localStorage.setItem(STORAGE_KEYS.guestBalance, String(users[uIdx].balance));
+                    }
+                }
+            }
+
+            tp.status = decision;
+            topups[idx] = tp;
+            saveAllTopups(topups);
+            broadcastAdminUpdate(`QTV_TOPUP_${decision}_${topupId}`, {
+                topupId,
+                status: decision,
+                username: tp.ownerUsername || tp.username,
+                amount: tp.amount
+            });
+            showToast(`Đã ${decision.toLowerCase()} yêu cầu nạp #${topupId} (${formatVND(tp.amount)})`, 'success');
+        };
+
+        /* ================= CỘNG / TRỪ SỐ DƯ TRỰC TIẾP CHO TÀI KHOẢN ================= */
+        window.adjustUserBalance = function (username, mode) {
+            const inputEl = document.getElementById(`balInput_${username}`);
+            const amount = parseInt(String(inputEl?.value || '').replace(/[^0-9]/g, ''), 10);
+            if (Number.isNaN(amount) || amount <= 0) {
+                showToast('Vui lòng nhập số tiền hợp lệ lớn hơn 0!', 'error');
+                return;
+            }
+
+            const users = getUsers();
+            const idx = users.findIndex(u => String(u.username || '').toLowerCase() === String(username).toLowerCase());
+            if (idx === -1) return;
+
+            const currentBal = Math.max(0, Number(users[idx].balance) || 0);
+            const nextBal = mode === 'add' ? currentBal + amount : Math.max(0, currentBal - amount);
+            users[idx].balance = nextBal;
+            saveUsers(users);
+
+            if (String(localStorage.getItem(STORAGE_KEYS.currentUser) || '').toLowerCase() === String(username).toLowerCase()) {
+                localStorage.setItem(STORAGE_KEYS.guestBalance, String(nextBal));
+            }
+
+            if (inputEl) inputEl.value = '';
+            broadcastAdminUpdate(`QTV_BALANCE_${mode.toUpperCase()}_${username}`, { username, amount, newBalance: nextBal });
+            showToast(`Đã ${mode === 'add' ? 'cộng' : 'trừ'} ${formatVND(amount)} cho ${username} (Số dư mới: ${formatVND(nextBal)})`, 'success');
+        };
+
+        /* ================= RENDER GIAO DIỆN CÁC TAB ================= */
+        window.renderAdminOrders = function () {
+            const container = document.getElementById('adminOrdersContainer');
+            if (!container) return;
+
+            const filter = document.getElementById('orderStatusFilter')?.value || 'all';
+            const orders = getAllOrders().filter(o => filter === 'all' || o.status === filter);
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-2xl bg-gaming-card border border-gaming-border text-center text-xs text-slate-400">
+                        Chưa có đơn hàng nào trong mục này.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = orders.map(ord => {
+                const st = ord.status || 'Đang xử Lí';
+                const badgeClass = st === 'Đã Hoàn Thành'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : st === 'Từ Chối'
+                        ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
+                        : 'bg-amber-500/15 border-amber-500/40 text-amber-300';
+
+                return `
+                    <article class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-2.5 text-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-extrabold text-sm text-[#00d2ff]">#${escapeHtml(ord.id)}</span>
+                                <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${badgeClass}">${escapeHtml(st)}</span>
+                                ${ord.hasAcc ? `<span class="px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/40 text-indigo-300 text-[10px] font-bold">Đơn Acc</span>` : ''}
+                            </div>
+                            <span class="font-display font-extrabold text-amber-400 text-sm">${formatVND(ord.total)}</span>
+                        </div>
+
+                        <div class="font-bold text-white">${escapeHtml(ord.items || '')}</div>
+                        <div class="text-[11px] text-slate-300">Khách / Nhân vật: <strong class="text-cyan-200">${escapeHtml(ord.username || '')}</strong></div>
+                        <div class="text-[10px] text-slate-500">${escapeHtml(ord.time || '')}</div>
+
+                        <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gaming-border/70">
+                            <button type="button" onclick="updateOrderStatus('${escapeHtml(ord.id)}', 'Đã Hoàn Thành')"
+                                class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-[11px]">
+                                <i class="fa-solid fa-check mr-1"></i>Hoàn thành
+                            </button>
+                            <button type="button" onclick="updateOrderStatus('${escapeHtml(ord.id)}', 'Đang xử Lí')"
+                                class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-[11px]">
+                                <i class="fa-solid fa-clock mr-1"></i>Đang xử lý
+                            </button>
+                            <button type="button" onclick="updateOrderStatus('${escapeHtml(ord.id)}', 'Từ Chối')"
+                                class="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[11px]">
+                                <i class="fa-solid fa-xmark mr-1"></i>Từ chối &amp; Hoàn tiền
+                            </button>
+                            <button type="button" onclick="deleteOrderItem('${escapeHtml(ord.id)}')"
+                                class="ml-auto px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        };
+
+        window.renderAdminTopups = function () {
+            const container = document.getElementById('adminTopupsContainer');
+            if (!container) return;
+
+            const filter = document.getElementById('topupStatusFilter')?.value || 'all';
+            const topups = getAllTopups().filter(t => filter === 'all' || t.status === filter);
+
+            if (topups.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-2xl bg-gaming-card border border-gaming-border text-center text-xs text-slate-400">
+                        Chưa có yêu cầu nạp tiền nào.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = topups.map(tp => {
+                const st = tp.status || 'Chờ Duyệt';
+                const badgeClass = st === 'Đã Duyệt'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : st === 'Từ Chối'
+                        ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
+                        : 'bg-amber-500/15 border-amber-500/40 text-amber-300';
+
+                return `
+                    <article class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-2.5 text-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-extrabold text-sm text-[#00d2ff]">#${escapeHtml(tp.id)}</span>
+                                <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${badgeClass}">${escapeHtml(st)}</span>
+                            </div>
+                            <span class="font-display font-extrabold text-emerald-400 text-sm">+${formatVND(tp.amount)}</span>
+                        </div>
+
+                        <div class="font-bold text-white">Tài khoản: <span class="text-[#00d2ff] font-mono">${escapeHtml(tp.ownerUsername || tp.username || '---')}</span> • ${escapeHtml(tp.method || '')}</div>
+                        ${tp.serial || tp.pin ? `
+                            <div class="p-2.5 rounded-xl bg-gaming-bg border border-gaming-border font-mono text-[11px] text-amber-200 space-y-0.5">
+                                <div>Seri: <strong>${escapeHtml(tp.serial || '')}</strong></div>
+                                <div>Mã thẻ: <strong>${escapeHtml(tp.pin || '')}</strong></div>
+                            </div>
+                        ` : ''}
+                        ${tp.note ? `<div class="text-[11px] text-slate-300">${escapeHtml(tp.note)}</div>` : ''}
+                        <div class="text-[10px] text-slate-500">${escapeHtml(tp.time || '')}</div>
+
+                        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-gaming-border/70">
+                            <button type="button" onclick="processTopupDecision('${escapeHtml(tp.id)}', 'Đã Duyệt')"
+                                class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-[11px]">
+                                <i class="fa-solid fa-circle-check mr-1"></i>Duyệt &amp; Cộng tiền
+                            </button>
+                            <button type="button" onclick="processTopupDecision('${escapeHtml(tp.id)}', 'Từ Chối')"
+                                class="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[11px]">
+                                <i class="fa-solid fa-ban mr-1"></i>Từ chối
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        };
+
+        window.renderAdminUsers = function () {
+            const container = document.getElementById('adminUsersContainer');
+            if (!container) return;
+
+            const q = String(document.getElementById('adminUserSearchInput')?.value || '').trim().toLowerCase();
+            const users = getUsers().filter(u =>
+                !q ||
+                String(u.username || '').toLowerCase().includes(q) ||
+                String(u.email || '').toLowerCase().includes(q)
+            );
+
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-2xl bg-gaming-card border border-gaming-border text-center text-xs text-slate-400">
+                        Chưa có tài khoản khách hàng nào đăng ký.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = users.map(u => `
+                <article class="p-3.5 rounded-2xl bg-gaming-card border border-gaming-border space-y-2.5 text-xs">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="font-display font-bold text-sm text-white truncate">${escapeHtml(u.username)}</div>
+                            <div class="text-[11px] text-slate-400 truncate">${escapeHtml(u.email || 'Không có email')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-[10px] text-slate-400">Số dư hiện tại</div>
+                            <div class="font-display font-extrabold text-sm text-[#00d2ff]">${formatVND(u.balance || 0)}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 pt-2 border-t border-gaming-border/70">
+                        <input type="number" id="balInput_${escapeHtml(u.username)}" min="1000" step="1000"
+                            placeholder="Nhập số tiền..."
+                            class="flex-1 bg-gaming-bg border border-gaming-border focus:border-[#00d2ff] rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none">
+                        <button type="button" onclick="adjustUserBalance('${escapeHtml(u.username)}', 'add')"
+                            class="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-[11px] shrink-0">
+                            + Cộng
+                        </button>
+                        <button type="button" onclick="adjustUserBalance('${escapeHtml(u.username)}', 'sub')"
+                            class="px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[11px] shrink-0">
+                            - Trừ
+                        </button>
+                    </div>
+                </article>
+            `).join('');
+        };
+
+        function renderSupabaseLogs() {
+            const container = document.getElementById('adminSupabaseLogsContainer');
+            if (!container) return;
+
+            if (cloudSyncRows.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 rounded-2xl bg-gaming-card border border-gaming-border text-center text-xs text-slate-400 space-y-1">
+                        <p class="font-bold text-white">Chưa có bản ghi đồng bộ nào trên Supabase</p>
+                        <p class="text-[11px]">Khi khách đăng ký, đăng nhập, nạp tiền hoặc đặt đơn trên Shop (dù khác IP/mạng), dữ liệu và IP sẽ tự động hiện tại đây.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = cloudSyncRows.map(row => {
+                const timeStr = row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '';
+                const payloadText = typeof row.payload === 'object' ? JSON.stringify(row.payload) : String(row.payload || '');
+                return `
+                    <article class="p-3 rounded-2xl bg-gaming-card border border-gaming-border space-y-1.5 text-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full bg-[#00d2ff]/15 border border-[#00d2ff]/35 text-[#00d2ff] font-mono font-bold text-[11px]">
+                                ${escapeHtml(row.event_type || 'SYNC_EVENT')}
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 font-mono font-bold text-[11px]">
+                                <i class="fa-solid fa-location-dot mr-1"></i>IP: ${escapeHtml(row.ip_address || 'unknown')}
+                            </span>
+                        </div>
+                        <div class="text-[11px] text-slate-300 font-mono break-all bg-gaming-bg p-2 rounded-xl border border-gaming-border/70">
+                            ${escapeHtml(payloadText)}
+                        </div>
+                        <div class="text-[10px] text-slate-500 text-right">${escapeHtml(timeStr)}</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function refreshAllViews() {
+            const orders = getAllOrders();
+            const topups = getAllTopups();
+            const users = getUsers();
+
+            const revenue = orders
+                .filter(o => o.status === 'Đã Hoàn Thành')
+                .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+            const pendingOrders = orders.filter(o => o.status === 'Đang xử Lí').length;
+            const pendingTopups = topups.filter(t => t.status === 'Chờ Duyệt').length;
+
+            document.getElementById('statRevenue').textContent = formatVND(revenue);
+            document.getElementById('statPendingOrders').textContent = String(pendingOrders);
+            document.getElementById('statPendingTopups').textContent = String(pendingTopups);
+            document.getElementById('statUsersAndLogs').textContent = `${users.length} / ${cloudSyncRows.length}`;
+
+            document.getElementById('badgeOrdersCount').textContent = String(orders.length);
+            document.getElementById('badgeTopupsCount').textContent = String(topups.length);
+            document.getElementById('badgeUsersCount').textContent = String(users.length);
+            document.getElementById('badgeSyncCount').textContent = String(cloudSyncRows.length);
+
+            renderAdminOrders();
+            renderAdminTopups();
+            renderAdminUsers();
+            renderSupabaseLogs();
+        }
+
+        /* ================= KẾT NỐI SUPABASE REALTIME & FETCH DỮ LIỆU ================= */
+        window.fetchSupabaseLogs = async function (notify = false) {
+            const dot = document.getElementById('supabaseStatusDot');
+            const label = document.getElementById('supabaseStatusText');
+            try {
+                const { data, error } = await supabase
+                    .from(SUPABASE_TABLE)
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(60);
+
+                if (error) {
+                    if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400';
+                    if (label) label.textContent = `Lỗi Supabase: ${error.message}`;
+                    if (notify) showToast(`Lỗi tải Supabase: ${error.message}`, 'error');
+                    return;
+                }
+
+                cloudSyncRows = Array.isArray(data) ? data : [];
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+                if (label) label.textContent = `Supabase Online • ${cloudSyncRows.length} bản ghi IP`;
+                refreshAllViews();
+                if (notify) showToast('Đã đồng bộ dữ liệu & IP mới nhất từ Cloud!', 'success');
+            } catch (err) {
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400';
+                if (label) label.textContent = 'Mất kết nối Supabase';
+            }
+        };
+
+        window.manualForceSync = function () {
+            refreshAllViews();
+            fetchSupabaseLogs(true);
+            broadcastAdminUpdate('QTV_MANUAL_SYNC');
+        };
+
+        function initRealtimeSync() {
+            try {
+                if ('BroadcastChannel' in window) {
+                    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+                    syncChannel.onmessage = (event) => {
+                        if (event?.data?.type === 'STATE_UPDATED') {
+                            refreshAllViews();
+                            if (event.data.source === 'index.html') {
+                                showToast('Có cập nhật mới từ trang Shop!', 'success');
+                            }
+                        }
+                    };
+                }
+            } catch (_) {}
+
+            window.addEventListener('storage', (event) => {
+                if (!event.key || Object.values(STORAGE_KEYS).includes(event.key)) {
+                    refreshAllViews();
+                }
+            });
+
+            supabase
+                .channel('qtv-store-sync-realtime')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: SUPABASE_TABLE },
+                    (payload) => {
+                        if (payload && payload.new) {
+                            cloudSyncRows.unshift(payload.new);
+                            if (cloudSyncRows.length > 60) cloudSyncRows.length = 60;
+                            refreshAllViews();
+                            showToast(`Nhận sự kiện mới từ IP ${payload.new.ip_address || 'unknown'}: ${payload.new.event_type}`, 'success');
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+
+            toast.className = `pointer-events-auto p-3 rounded-xl border shadow-xl flex items-center gap-2.5 text-xs font-semibold transition-all duration-300 transform translate-y-2 opacity-0 ${
+                isError
+                    ? 'bg-rose-950/95 border-rose-500/60 text-rose-100'
+                    : 'bg-gaming-card/95 border-[#00d2ff]/50 text-white'
+            }`;
+
+            toast.innerHTML = `
+                <i class="fa-solid ${isError ? 'fa-circle-exclamation text-rose-400' : 'fa-circle-check text-[#00d2ff]'} text-base shrink-0"></i>
+                <span class="flex-1 leading-snug">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3400);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initRealtimeSync();
+            checkAdminAuthGate();
+        });
+    </script>
+</body>
+</html>
